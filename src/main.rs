@@ -1,21 +1,29 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct TextParameter {
-    inputText: String,
-    outputText: String,
+    input_text: String,
 }
 
-#[get("/")]
+#[post("/result")]
+async fn post_text(form: web::Form<TextParameter>) -> impl Responder {
+    let response : String = space_remover(&form.input_text);
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .body(
+            response
+        )
+}
+
 async fn get_index() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html")
         .body(
             r#"
                 <title>Space Remover</title>
-                <form action="/output" method="post">
-                <input type="text" name="inputText" />
+                <form action="/result" method="post">
+                <input type="textarea" name="input_text" />
                 <button type="submit">Remove whitespaces</button>
                 </form>
             "#,
@@ -25,7 +33,8 @@ async fn get_index() -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
-        App.new()
+        App::new()
+            .service(post_text)
             .route("/", web::get().to(get_index))
     })
     .bind(("127.0.0.1", 8000))?
@@ -33,22 +42,28 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-fn space_remover(mut& s: &str) -> String {
-
+fn space_remover(s: &str) -> String {
+    let all_text = s.to_string();
+    let stage1: Vec<&str> = all_text.split_whitespace().collect();
+    let stage1_str = stage1.concat().to_string();
+    stage1_str
 }
 
 #[test]
 fn test_space_remover() {
-    let samples: Vec<(str, str)> = [
-        ("a b c d e f gh i j k l m n",
+    let samples : Vec<(&str, &str)> = vec![
+        ("a b c d e f gh ij k l m n",
             "abcdefghijklmn"),
-        ("あ いうえ お、かき くけ こ　さし す せ そ ",
+        ("あ　いうえ　お、　かき　くけ　こ　　さし　すせそ　",
             "あいうえお、かきくけこさしすせそ"),
         ("",
             ""),
         ("012 345 6 7 89   10",
             "012345678910"),
-    ]
+        ("first line\n
+        second line",
+            "firstlinesecondline"),
+    ];
     for sample in samples {
         assert_eq!(space_remover(sample.0), sample.1);
     }
