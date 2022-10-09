@@ -23,9 +23,12 @@ async fn get_index() -> impl Responder {
             r#"
                 <title>Space Remover</title>
                 <form action="/result" method="post">
-                <input type="textarea" name="input_text" />
+                <input type="textarea" name="input_text" class="textbox"/>
                 <button type="submit">Remove whitespaces</button>
                 </form>
+                <style type="text/css">
+                    .textbox{height: 500; width: 600}
+                </style>
             "#,
         )
 }
