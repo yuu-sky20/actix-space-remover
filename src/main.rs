@@ -6,31 +6,46 @@ struct TextParameter {
     input_text: String,
 }
 
+
 #[post("/result")]
 async fn post_text(form: web::Form<TextParameter>) -> impl Responder {
     let response : String = space_remover(&form.input_text);
+    let style = r#"
+                    <style type="text/css">
+                        .textbox{height: 500; width: 600}
+                    </style>
+                "#;
+    macro_rules! base_text {() => (
+        r#"
+            <title>Space Remover</title>
+            <label>
+                <textarea class="textbox" wrap="soft" autocomplete="off" readonly>{text}</textarea>
+            </label>
+        "#
+    )}
+    let text = format!(base_text!(), text = response) + style;
     HttpResponse::Ok()
         .content_type("text/html")
-        .body(
-            response
-        )
+        .body(text)
 }
 
 async fn get_index() -> impl Responder {
-    HttpResponse::Ok()
-        .content_type("text/html")
-        .body(
+    let style = r#"
+                    <style type="text/css">
+                        .textbox{height: 500; width: 600}
+                    </style>.
+                "#;
+    let text = 
             r#"
                 <title>Space Remover</title>
                 <form action="/result" method="post">
-                <input type="textarea" name="input_text" class="textbox"/>
+                <input type="textarea" name="input_text" class="textbox" wrap="soft" autocomplete="off"/>
                 <button type="submit">Remove whitespaces</button>
                 </form>
-                <style type="text/css">
-                    .textbox{height: 500; width: 600}
-                </style>
-            "#,
-        )
+            "#.to_string() + style;
+    HttpResponse::Ok()
+        .content_type("text/html")
+        .body(text)
 }
 
 #[actix_web::main]
